@@ -1,0 +1,5 @@
+"0","ggplot(Model_Building_Data, aes(x = PaymentMethod)) +"
+"0","  geom_bar(fill = ""blue"", alpha = 0.7) +"
+"0","  geom_text(stat = ""count"", aes(label = ..count..), vjust = -0.3, size = 5) +"
+"0","  theme_minimal(base_size = 14) +"
+"0","  labs(title = ""Bar Plot of Category"", x = ""Category"", y = ""Count"")"

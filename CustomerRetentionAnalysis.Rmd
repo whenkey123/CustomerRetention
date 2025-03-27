@@ -51,6 +51,16 @@ Convert SeniorCitizen into Factor to avoiding algorithm considering it as contin
 Model_Building_Data$SeniorCitizen <- as.factor(Model_Building_Data$SeniorCitizen)
 ```
 
+
+Missing Values Analysis
+```{r}
+sapply(Model_Building_Data, function(x) sum(is.na(x)))
+```
+TotalCharges has missing values.
+
+
+
+
 TODO: Remove this if not need (Option 1) try one
 ```{r}
 Model_Building_Data %>%
@@ -71,4 +81,16 @@ ggplot(Model_Building_Data, aes(x = PaymentMethod)) +
   theme_minimal(base_size = 14) +
   labs(title = "Bar Plot of PaymentMethod", x = "PaymentMethod", y = "Customers")
 ```
+TODO: Explain bar plot and your findings.
+
+TODO: Repeat for all numeric columns and adjust bins as required
+```{r}
+ggplot(Model_Building_Data, aes(x = Tenure)) +
+  geom_histogram(binwidth = 10, boundary = 0, fill = "blue", color = "black", alpha = 0.7) +
+  labs(title = "Histogram of Tenure", x = "Tenure (Bin=10)", y = "Customers") +
+  theme_minimal()
+```
+
+TODO: Explain histogram plot and your findings.
+
 

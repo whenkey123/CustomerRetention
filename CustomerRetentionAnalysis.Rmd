@@ -8,12 +8,17 @@ output: html_notebook
 # Uncomment respective line for which package is missing.
 #install.packages("ggplot2")
 #install.packages("tidyr")
+#install.packages("reshape2")
+#install.packages("corrplot")
 ```
 
 ### Load Required Libraries
 ```{r}
-library(ggplot2)
+library(dplyr)
 library(tidyr)
+library(ggplot2)
+library(reshape2)
+library(corrplot)
 ```
 
 ### Datasets
@@ -56,6 +61,7 @@ Model_Building_Data$SeniorCitizen <- as.factor(Model_Building_Data$SeniorCitizen
 
 ### Missing Values
 There are multiple ways to handle missing values:
+
 * Removing -> If missing values are very few <5% of data.
 * Mean -> If normally distributed.
 * Median -> If data is skewed.
@@ -87,16 +93,32 @@ sapply(Model_Building_Data, function(x) sum(is.na(x)))
 ```
 
 ## 1.2 Exploratory Data Analysis
-TODO: Repeat for all Factor columns (Option 2) try one
+TODO: Repeat for all Factor columns
 
 ```{r}
 ggplot(Model_Building_Data, aes(x = PaymentMethod)) +
   geom_bar(fill = "skyblue", color="black", alpha = 0.6) +
-  geom_text(stat = "count", aes(label = ..count..), vjust = -0.6, size = 3) +
+  geom_text(stat = "count", aes(label = after_stat(count)), vjust = -0.6, size = 3) +
   theme_minimal(base_size = 12) +
   labs(title = "Bar Plot of PaymentMethod", x = "PaymentMethod", y = "Customers")
 ```
 TODO: Explain bar plot and your findings.
+
+TODO: You can also use pie chart instead of barplot.
+```{r}
+status_counts <- table(Model_Building_Data$Status)
+status_df <- as.data.frame(status_counts)
+status_df$percentage <- round(100 * status_df$Freq / sum(status_df$Freq), 1)
+ggplot(status_df, aes(x = "", y = Freq, fill = Var1)) +
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar(theta = "y") +
+  labs(title = "Distribution of Status") +
+  theme_void() +
+  theme(legend.title = element_blank()) +
+  geom_text(aes(label = paste(percentage, "%")), position = position_stack(vjust = 0.5))
+```
+TODO: Mention that the dataset is imbalanced, we can use undersampling or oversampling or synthetic records generation if model is not performing well with this imbalanced dataset.
+
 
 TODO: Repeat for all numeric columns and adjust bins as required
 ```{r}
@@ -108,9 +130,28 @@ ggplot(Model_Building_Data, aes(x = Tenure)) +
 
 TODO: Explain histogram plot and your findings.
 
-### Correlation of Customer
+### Correlation
 ```{r}
-cor_matrix <- cor(Model_Building_Data[sapply(Model_Building_Data, is.numeric)])
-print(cor_matrix)
+data_numeric <- Model_Building_Data %>%
+  mutate(across(where(is.factor), as.numeric))
+cor_matrix <- cor(data_numeric, use = "complete.obs")
+
+# Displaying correlation after rounding
+#print(round(cor_matrix, 2))
+corrplot(cor_matrix, method = "color",
+         tl.col = "black",
+         tl.cex = 0.8,
+         addCoef.col = "black",
+         number.cex = 0.4,
+         number.font = 2,
+         number.digits = 2)
 ```
+
+TODO: Explain all important correlations between 1. independent to independent variables, 2. independent to dependent variable. i.e, all possible correlations (focus on highly +ve/-ve correlations)
+
+### Training and Testing Dataset Preparation
+We are dividing the entire dataset into 80% for training and 20% for testing.
+
+
+
 

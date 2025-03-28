@@ -3,82 +3,97 @@ title: "Customer Retention Project"
 output: html_notebook
 ---
 
-Requirements.txt
+### Install Required Libraries
 ```{r}
+# Uncomment respective line for which package is missing.
 #install.packages("ggplot2")
 #install.packages("tidyr")
 ```
 
-Load Required Libraries
+### Load Required Libraries
 ```{r}
 library(ggplot2)
 library(tidyr)
 ```
 
-Dataset Files
+### Datasets
+
+### Load Datasets
 ```{r}
 implementation_data <- "Implementation_Data.rda"
-model_building_data <- "Model_Building_Data.rda"
-```
-
-Load the dataset files
-```{r}
 load(implementation_data)
+
+model_building_data <- "Model_Building_Data.rda"
 load(model_building_data)
 ```
 
-View Implementation Data Details
+### Implementation Dataset Quick View
 ```{r}
+head(Implementation_Data)
 str(Implementation_Data)
 ```
 
-View Model Building Data Details
+### Model Building Dataset Quick View
 ```{r}
+head(Model_Building_Data)
 str(Model_Building_Data)
 ```
-Status is loaded as chr check for unique values
-```{r}
-length(unique(Model_Building_Data$Status))
-```
 
-We can only 2 values so it can be converted into Factor
+# 1. Data Preparation & Exploratory Data Analysis
+**Data preparation** is cleaning and organizing data, while **Exploratory Data Analysis (EDA)** helps explore patterns and trends using summaries and visuals.
+
+## 1.1 Data Preparation
+### Datatypes
+**Status** is loaded as *chr* and having `r length(unique(Model_Building_Data$Status))` values only so it can be converted into *factor*
 ```{r}
 Model_Building_Data$Status <- as.factor(Model_Building_Data$Status)
 ```
 
-Convert SeniorCitizen into Factor to avoiding algorithm considering it as continous variable.
+**SeniorCitizen** is loaded as an *integer* it can be converted into a *factor* for better machine learning analysis.
 ```{r}
 Model_Building_Data$SeniorCitizen <- as.factor(Model_Building_Data$SeniorCitizen)
 ```
 
+### Missing Values
+There are multiple ways to handle missing values:
+* Removing -> If missing values are very few <5% of data.
+* Mean -> If normally distributed.
+* Median -> If data is skewed.
+* Regression -> Many missing values.
 
-Missing Values Analysis
+Let's check missing values for all the columns:
 ```{r}
 sapply(Model_Building_Data, function(x) sum(is.na(x)))
 ```
-TotalCharges has missing values.
-
-
-
-
-TODO: Remove this if not need (Option 1) try one
+We have 11 missing values for **TotalCharges** column which is very small less (<5% of data) so we can remove missing records.
+Let's check the histogram and analyze the distribution of the data.
 ```{r}
-Model_Building_Data %>%
-    pivot_longer(cols = where(is.factor), names_to = "Variable", values_to = "Value") %>%
-    ggplot(aes(x = Value)) +
-    geom_bar(fill = "blue", alpha = 0.6) +
-    geom_text(stat = "count", aes(label = ..count..), vjust = 1.3, size = 2) +
-    facet_wrap(~ Variable, scales = "free", ncol = 3) +
-    theme_minimal(base_size = 8) +
-    theme(axis.text.x = element_text(angle = 10, hjust = 1))
+hist(Model_Building_Data$TotalCharges, 
+     breaks = 30, 
+     main = "Distribution of Total Charges", 
+     xlab = "Total Charges ($)", 
+     ylab = "Customers", 
+     col = "skyblue")
+
+```
+*TotalCharges* is right skewed, so we can use median in order to update missing records.
+```{r}
+Model_Building_Data$TotalCharges[is.na(Model_Building_Data$TotalCharges)] <- median(Model_Building_Data$TotalCharges, na.rm = TRUE)
 ```
 
+Now cross check the whether missing values are handled or not
+```{r}
+sapply(Model_Building_Data, function(x) sum(is.na(x)))
+```
+
+## 1.2 Exploratory Data Analysis
 TODO: Repeat for all Factor columns (Option 2) try one
+
 ```{r}
 ggplot(Model_Building_Data, aes(x = PaymentMethod)) +
-  geom_bar(fill = "blue", alpha = 0.7) +
-  geom_text(stat = "count", aes(label = ..count..), vjust = -0.3, size = 5) +
-  theme_minimal(base_size = 14) +
+  geom_bar(fill = "skyblue", color="black", alpha = 0.6) +
+  geom_text(stat = "count", aes(label = ..count..), vjust = -0.6, size = 3) +
+  theme_minimal(base_size = 12) +
   labs(title = "Bar Plot of PaymentMethod", x = "PaymentMethod", y = "Customers")
 ```
 TODO: Explain bar plot and your findings.
@@ -86,11 +101,16 @@ TODO: Explain bar plot and your findings.
 TODO: Repeat for all numeric columns and adjust bins as required
 ```{r}
 ggplot(Model_Building_Data, aes(x = Tenure)) +
-  geom_histogram(binwidth = 10, boundary = 0, fill = "blue", color = "black", alpha = 0.7) +
-  labs(title = "Histogram of Tenure", x = "Tenure (Bin=10)", y = "Customers") +
+  geom_histogram(binwidth = 10, boundary = 0, fill = "skyblue", color = "black", alpha = 0.7) +
+  labs(title = "Distribution of Tenure", x = "Tenure (Bin=10)", y = "Customers") +
   theme_minimal()
 ```
 
 TODO: Explain histogram plot and your findings.
 
+### Correlation of Customer
+```{r}
+cor_matrix <- cor(Model_Building_Data[sapply(Model_Building_Data, is.numeric)])
+print(cor_matrix)
+```
 

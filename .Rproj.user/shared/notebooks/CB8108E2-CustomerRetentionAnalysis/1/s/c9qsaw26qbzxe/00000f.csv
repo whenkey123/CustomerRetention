@@ -1,8 +1,0 @@
-"0","Model_Building_Data %>%"
-"0","    pivot_longer(cols = where(is.factor), names_to = ""Variable"", values_to = ""Value"") %>%"
-"0","    ggplot(aes(x = Value)) +"
-"0","    geom_bar(fill = ""blue"", alpha = 0.6) +"
-"0","    geom_text(stat = ""count"", aes(label = ..count..), vjust = 1.3, size = 2) +"
-"0","    facet_wrap(~ Variable, scales = ""free"", ncol = 3) +"
-"0","    theme_minimal(base_size = 8) +"
-"0","    theme(axis.text.x = element_text(angle = 10, hjust = 1))"

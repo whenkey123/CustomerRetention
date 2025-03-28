@@ -1,4 +1,0 @@
-"0","ggplot(Model_Building_Data, aes(x = Tenure)) +"
-"0","  geom_histogram(binwidth = 10, boundary = 0, fill = ""blue"", color = ""black"", alpha = 0.7) +"
-"0","  labs(title = ""Histogram of Tenure"", x = ""Tenure (Bin=10)"", y = ""Customers"") +"
-"0","  theme_minimal()"

@@ -1,0 +1,289 @@
+---
+title: "Customer Retention Project"
+output:
+  html_document:
+    df_print: paged
+---
+
+### Install Required Libraries
+```{r}
+# Uncomment respective line for which package is missing.
+#install.packages("ggplot2")
+#install.packages("tidyr")
+#install.packages("PerformanceAnalytics") 
+```
+
+### Load Required Libraries
+```{r}
+library(ggplot2)
+library(tidyr)
+library(PerformanceAnalytics) 
+library(dplyr)
+library(caret)
+library(pROC)
+library(ISLR)
+
+```
+
+### Datasets
+
+### Load Datasets
+```{r}
+#implementation_data <- "Implementation_Data.rda"
+load("Implementation_Data.rda")
+
+model_building_data <- "Model_Building_Data.rda"
+load("Model_Building_Data.rda")
+```
+
+### Implementation Dataset Quick View
+```{r}
+head(Implementation_Data)
+str(Implementation_Data)
+```
+
+### Model Building Dataset Quick View
+```{r}
+head(Model_Building_Data)
+str(Model_Building_Data)
+```
+
+# 1. Data Preparation & Exploratory Data Analysis
+**Data preparation** is cleaning and organizing data, while **Exploratory Data Analysis (EDA)** helps explore patterns and trends using summaries and visuals.
+
+## 1.1 Data Preparation
+### Datatypes
+**Status** is loaded as *chr* and having `r length(unique(Model_Building_Data$Status))` values only so it can be converted into *factor*
+```{r}
+Model_Building_Data$Status <- as.factor(Model_Building_Data$Status)
+```
+
+**SeniorCitizen** is loaded as an *integer* it can be converted into a *factor* for better machine learning analysis.
+```{r}
+Model_Building_Data$SeniorCitizen <- as.factor(Model_Building_Data$SeniorCitizen)
+```
+
+### Missing Values
+There are multiple ways to handle missing values:
+* Removing -> If missing values are very few <5% of data.
+* Mean -> If normally distributed.
+* Median -> If data is skewed.
+* Regression -> Many missing values.
+
+Let's check missing values for all the columns:
+```{r}
+sapply(Model_Building_Data, function(x) sum(is.na(x)))
+```
+We have 11 missing values for **TotalCharges** column which is very small less (<5% of data) so we can remove missing records.
+Let's check the histogram and analyze the distribution of the data.
+```{r}
+hist(Model_Building_Data$TotalCharges, 
+     breaks = 30, 
+     main = "Distribution of Total Charges", 
+     xlab = "Total Charges ($)", 
+     ylab = "Customers", 
+     col = "skyblue")
+
+```
+*TotalCharges* is right skewed, so we can use median in order to update missing records.
+```{r}
+Model_Building_Data$TotalCharges[is.na(Model_Building_Data$TotalCharges)] <- median(Model_Building_Data$TotalCharges, na.rm = TRUE)
+```
+
+Now cross check the whether missing values are handled or not
+```{r}
+sapply(Model_Building_Data, function(x) sum(is.na(x)))
+```
+
+## 1.2 Exploratory Data Analysis
+TODO: Repeat for all Factor columns (Option 2) try one
+```{r}
+ggplot(Model_Building_Data, aes(x = Partner)) +
+  geom_bar(fill = "skyblue", color="black", alpha = 0.6) +
+  geom_text(stat = "count", aes(label = ..count..), vjust = -0.6, size = 3) +
+  theme_minimal(base_size = 12) +
+  labs(title = "Bar Plot of Partner", x = "Partner", y = "Customers")
+```
+
+```{r}
+ggplot(Model_Building_Data, aes(x = Dependents)) +
+  geom_bar(fill = "skyblue", color="black", alpha = 0.6) +
+  geom_text(stat = "count", aes(label = ..count..), vjust = -0.6, size = 3) +
+  theme_minimal(base_size = 12) +
+  labs(title = "Bar Plot of Dependents", x = "Dependents", y = "Customers")
+```
+
+```{r}
+ggplot(Model_Building_Data, aes(x = PhoneService)) +
+  geom_bar(fill = "skyblue", color="black", alpha = 0.6) +
+  geom_text(stat = "count", aes(label = ..count..), vjust = -0.6, size = 3) +
+  theme_minimal(base_size = 12) +
+  labs(title = "Bar Plot of Phoneservice", x = "Phoneservice", y = "Customers")
+```
+
+```{r}
+ggplot(Model_Building_Data, aes(x = MultipleLines)) +
+  geom_bar(fill = "skyblue", color="black", alpha = 0.6) +
+  geom_text(stat = "count", aes(label = ..count..), vjust = -0.6, size = 3) +
+  theme_minimal(base_size = 12) +
+  labs(title = "Bar Plot of Multiplelines", x = "Multiplelines", y = "Customers")
+```
+
+```{r}
+ggplot(Model_Building_Data, aes(x = InternetService)) +
+  geom_bar(fill = "skyblue", color="black", alpha = 0.6) +
+  geom_text(stat = "count", aes(label = ..count..), vjust = -0.6, size = 3) +
+  theme_minimal(base_size = 12) +
+  labs(title = "Bar Plot of Internetservice", x = "Internetservice", y = "Customers")
+```
+
+```{r}
+ggplot(Model_Building_Data, aes(x = OnlineSecurity)) +
+  geom_bar(fill = "skyblue", color="black", alpha = 0.6) +
+  geom_text(stat = "count", aes(label = ..count..), vjust = -0.6, size = 3) +
+  theme_minimal(base_size = 12) +
+  labs(title = "Bar Plot of Onlinesecurity", x = "Onlinesecurity", y = "Customers")
+```
+
+```{r}
+ggplot(Model_Building_Data, aes(x = DeviceProtection)) +
+  geom_bar(fill = "skyblue", color="black", alpha = 0.6) +
+  geom_text(stat = "count", aes(label = ..count..), vjust = -0.6, size = 3) +
+  theme_minimal(base_size = 12) +
+  labs(title = "Bar Plot of Deviceprotection", x = "Deviceprotection", y = "Customers")
+```
+
+```{r}
+ggplot(Model_Building_Data, aes(x = Contract)) +
+  geom_bar(fill = "skyblue", color="black", alpha = 0.6) +
+  geom_text(stat = "count", aes(label = ..count..), vjust = -0.6, size = 3) +
+  theme_minimal(base_size = 12) +
+  labs(title = "Bar Plot of Contract", x = "Contract", y = "Customers")
+```
+
+```{r}
+ggplot(Model_Building_Data, aes(x = StreamingMovies)) +
+  geom_bar(fill = "skyblue", color="black", alpha = 0.6) +
+  geom_text(stat = "count", aes(label = ..count..), vjust = -0.6, size = 3) +
+  theme_minimal(base_size = 12) +
+  labs(title = "Bar Plot of Streamingmovies", x = "Streamingmovies", y = "Customers")
+```
+
+```{r}
+ggplot(Model_Building_Data, aes(x = PaperlessBilling)) +
+  geom_bar(fill = "skyblue", color="black", alpha = 0.6) +
+  geom_text(stat = "count", aes(label = ..count..), vjust = -0.6, size = 3) +
+  theme_minimal(base_size = 12) +
+  labs(title = "Bar Plot of Paperlessbilling", x = "Paperlessbilling", y = "Customers")
+```
+
+```{r}
+ggplot(Model_Building_Data, aes(x = PaymentMethod)) +
+  geom_bar(fill = "skyblue", color="black", alpha = 0.6) +
+  geom_text(stat = "count", aes(label = ..count..), vjust = -0.6, size = 3) +
+  theme_minimal(base_size = 12) +
+  labs(title = "Bar Plot of PaymentMethod", x = "PaymentMethod", y = "Customers")
+```
+
+```{r}
+ggplot(Model_Building_Data, aes(x = Status)) +
+  geom_bar(fill = "skyblue", color="black", alpha = 0.6) +
+  geom_text(stat = "count", aes(label = ..count..), vjust = -0.6, size = 3) +
+  theme_minimal(base_size = 12) +
+  labs(title = "Bar Plot of Status", x = "Status", y = "Customers")
+```
+
+TODO: Explain bar plot and your findings.
+
+TODO: Repeat for all numeric columns and adjust bins as required
+```{r}
+ggplot(Model_Building_Data, aes(x = Tenure)) +
+  geom_histogram(binwidth = 10, boundary = 0, fill = "skyblue", color = "black", alpha = 0.7) +
+  labs(title = "Distribution of Tenure", x = "Tenure (Bin=10)", y = "Customers") +
+  theme_minimal()
+```
+
+```{r}
+ggplot(Model_Building_Data, aes(x = MonthlyCharges)) +
+  geom_histogram(binwidth = 10, boundary = 0, fill = "skyblue", color = "black", alpha = 0.7) +
+  labs(title = "Distribution of MonthlyCharges", x = "Monthlycharges (Bin=10)", y = "Customers") +
+  theme_minimal()
+```
+
+```{r}
+ggplot(Model_Building_Data, aes(x = TotalCharges)) +
+  geom_histogram(binwidth = 1000, boundary = 0, fill = "skyblue", color = "black", alpha = 0.7) +
+  labs(title = "Distribution of TotalCharges", x = "Totalcharges (Bin=10)", y = "Customers") +
+  theme_minimal()
+```
+TODO: Explain histogram plot and your findings.
+
+### Correlation of Customer
+```{r}
+Model_Building_Data.numeric <- Model_Building_Data %>%
+  select(Tenure,MonthlyCharges,TotalCharges)
+chart.Correlation(Model_Building_Data.numeric , histogram=TRUE, pch=19)
+```
+
+
+### Spliting the data
+```{r}
+set.seed(1)
+train <- sample(nrow(Model_Building_Data), size = 0.8 * nrow(Model_Building_Data))
+
+model.train <- Model_Building_Data[train,]
+model.test <- Model_Building_Data[-train,]
+```
+
+# 2. Logistic Regression
+
+### 2.1 bilding logistic regression
+
+```{r}
+logit_model <- glm(Status ~ ., data = model.train, family = binomial)
+summary(logit_model)
+```
+
+```{r}
+model.test.predicted_prob <- predict(logit_model, newdata = model.test, type = "response")
+roc_curve <- roc(model.test$Status, model.test.predicted_prob)
+auc_value <- auc(roc_curve)
+auc_value
+
+```
+
+```{r}
+logit_model_min <- glm(Status ~ SeniorCitizen + Tenure +  PhoneService + MultipleLines + InternetService + OnlineSecurity + Contract + PaperlessBilling + TotalCharges, data = model.train, family = binomial)
+summary(logit_model)
+```
+
+
+
+```{r}
+plot(roc_curve, col = "blue", main = paste("ROC Curve (AUC =", round(auc_value, 4), ")"))
+```
+
+```{r}
+
+ Prediction_Classes <- ifelse(model.test.predicted_prob > 0.5, "Left", "Current")
+  conf_matrix <- table(Prediction_Classes, model.test$Status)
+ 
+  accuracy <- sum(diag(conf_matrix)) / sum(conf_matrix) * 100
+accuracy
+```
+
+```{r}
+ Prediction_Classes <- ifelse(model.test.predicted_prob > 0.3, "Left", "Current")
+  conf_matrix <- table(Prediction_Classes, model.test$Status)
+ 
+  accuracy <- sum(diag(conf_matrix)) / sum(conf_matrix) * 100
+accuracy
+```
+
+```{r}
+ Prediction_Classes <- ifelse(model.test.predicted_prob > 0.7, "Left", "Current")
+  conf_matrix <- table(Prediction_Classes, model.test$Status)
+ 
+  accuracy <- sum(diag(conf_matrix)) / sum(conf_matrix) * 100
+accuracy
+```
